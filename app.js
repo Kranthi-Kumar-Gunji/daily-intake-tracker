@@ -1,5 +1,5 @@
-
 const STORAGE_KEY = "dailyIntakeTrackerV1";
+const foods = Array.isArray(window.FOOD_DATABASE) ? window.FOOD_DATABASE : [];
 
 const nutrientMeta = {
   calories: { label: "Calories", unit: "kcal" },
@@ -28,8 +28,15 @@ let state = loadState();
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return structuredClone(defaultState);
-  try { return JSON.parse(raw); }
-  catch { return structuredClone(defaultState); }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed.profiles?.length) return structuredClone(defaultState);
+    parsed.logs ||= {};
+    parsed.activeProfileId ||= parsed.profiles[0].id;
+    return parsed;
+  } catch {
+    return structuredClone(defaultState);
+  }
 }
 
 function saveState() {
@@ -37,7 +44,11 @@ function saveState() {
 }
 
 function dateKey() {
-  return new Date().toISOString().slice(0,10);
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function activeProfile() {
@@ -45,17 +56,14 @@ function activeProfile() {
 }
 
 function calcBMR(p) {
-  // Mifflin-St Jeor
   const base = 10 * p.weight + 6.25 * p.height - 5 * p.age;
   return p.sex === "male" ? base + 5 : base - 161;
 }
 
 function nutrientTargets(p) {
   const calories = Math.round(calcBMR(p) * Number(p.activity));
-
-  // General adult reference targets.
-  // Some values change at 51+; protein uses 0.8 g/kg minimum.
   let iron, vitaminC, calcium, fiber;
+
   if (p.sex === "female") {
     iron = p.age >= 51 ? 8 : 18;
     vitaminC = 75;
@@ -113,10 +121,8 @@ function renderProfiles() {
   document.getElementById("height").value = p.height;
   document.getElementById("activity").value = String(p.activity);
 
-  const bmr = Math.round(calcBMR(p));
-  const target = nutrientTargets(p).calories;
-  document.getElementById("bmrValue").textContent = `${bmr} kcal/day`;
-  document.getElementById("calorieTargetValue").textContent = `${target} kcal/day`;
+  document.getElementById("bmrValue").textContent = `${Math.round(calcBMR(p))} kcal/day`;
+  document.getElementById("calorieTargetValue").textContent = `${nutrientTargets(p).calories} kcal/day`;
 }
 
 function renderRings() {
@@ -129,17 +135,82 @@ function renderRings() {
     const v = total[key];
     const pctRaw = t ? (v / t) * 100 : 0;
     const pct = Math.max(0, Math.min(100, pctRaw));
-    const displayPct = Math.round(pctRaw);
     const meta = nutrientMeta[key];
     return `
       <div class="ring-card">
-        <div class="ring" style="--p:${pct}">
-          <span>${displayPct}%</span>
-        </div>
+        <div class="ring" style="--p:${pct}"><span>${Math.round(pctRaw)}%</span></div>
         <div class="name">${meta.label}</div>
         <div class="value">${formatNum(v)} / ${formatNum(t)} ${meta.unit}</div>
-      </div>
-    `;
+      </div>`;
+  }).join("");
+}
+
+function foodCategories() {
+  return [...new Set(foods.map(f => f.category))].sort();
+}
+
+function renderFoodCategories() {
+  const categoryEl = document.getElementById("foodCategory");
+  if (!categoryEl.options.length) {
+    categoryEl.innerHTML = `<option value="All">All foods</option>` +
+      foodCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  }
+  renderFoodOptions();
+}
+
+function renderFoodOptions() {
+  const category = document.getElementById("foodCategory").value || "All";
+  const foodEl = document.getElementById("foodSelect");
+  const currentId = foodEl.value;
+  const filtered = category === "All" ? foods : foods.filter(f => f.category === category);
+
+  foodEl.innerHTML = filtered.map(f =>
+    `<option value="${f.id}">${escapeHtml(f.name)}</option>`
+  ).join("");
+
+  if (filtered.some(f => f.id === currentId)) foodEl.value = currentId;
+  updateFoodPreview();
+}
+
+function selectedFood() {
+  return foods.find(f => f.id === document.getElementById("foodSelect").value);
+}
+
+function selectedAmountInGrams() {
+  const food = selectedFood();
+  if (!food) return 0;
+  const qty = Math.max(0, Number(document.getElementById("foodQuantity").value || 0));
+  const unit = document.getElementById("quantityUnit").value;
+  return unit === "serving" ? qty * food.servingGrams : qty;
+}
+
+function calculateNutrition(food, grams) {
+  const factor = grams / 100;
+  const result = {};
+  Object.keys(nutrientMeta).forEach(key => {
+    result[key] = Number(food?.[key] || 0) * factor;
+  });
+  return result;
+}
+
+function updateFoodPreview() {
+  const food = selectedFood();
+  if (!food) {
+    document.getElementById("nutritionPreview").innerHTML = "No foods available.";
+    return;
+  }
+
+  const grams = selectedAmountInGrams();
+  const nutrition = calculateNutrition(food, grams);
+  const unit = document.getElementById("quantityUnit").value;
+  const qty = Number(document.getElementById("foodQuantity").value || 0);
+
+  document.getElementById("servingHint").textContent =
+    `Standard serving: ${food.servingName} = ${food.servingGrams} g. Current amount: ${formatNum(grams)} g.`;
+
+  document.getElementById("nutritionPreview").innerHTML = Object.keys(nutrientMeta).map(key => {
+    const meta = nutrientMeta[key];
+    return `<div class="preview-item"><span>${meta.label}</span><strong>${formatNum(nutrition[key])} ${meta.unit}</strong></div>`;
   }).join("");
 }
 
@@ -148,13 +219,14 @@ function renderTable() {
   const log = getLog();
 
   if (!log.length) {
-    body.innerHTML = `<tr><td colspan="11">No food entered yet today.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="12">No food entered yet today.</td></tr>`;
     return;
   }
 
   body.innerHTML = log.map((e, i) => `
     <tr>
       <td>${escapeHtml(e.foodName || "Food")}</td>
+      <td>${formatNum(e.grams || 0)} g</td>
       <td>${formatNum(e.calories)}</td>
       <td>${formatNum(e.protein)}</td>
       <td>${formatNum(e.iron)}</td>
@@ -165,24 +237,19 @@ function renderTable() {
       <td>${formatNum(e.folate)}</td>
       <td>${formatNum(e.fiber)}</td>
       <td><button class="danger" onclick="removeEntry(${i})">Delete</button></td>
-    </tr>
-  `).join("");
+    </tr>`).join("");
 }
 
 function formatNum(n) {
   const x = Number(n || 0);
-  return Number.isInteger(x) ? x : Math.round(x * 10) / 10;
+  if (Math.abs(x) >= 100) return Math.round(x);
+  return Math.round(x * 10) / 10;
 }
 
 function escapeHtml(str) {
   return String(str).replace(/[&<>"']/g, s => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
   })[s]);
-}
-
-function clearFoodInputs() {
-  ["foodName","calories","protein","iron","vitaminC","vitaminD","b12","calcium","folate","fiber"]
-    .forEach(id => document.getElementById(id).value = "");
 }
 
 function render() {
@@ -211,35 +278,30 @@ document.getElementById("saveProfileBtn").addEventListener("click", () => {
 });
 
 document.getElementById("newProfileBtn").addEventListener("click", () => {
-  const p = {
-    id: crypto.randomUUID(),
-    name: "New Person",
-    sex: "female",
-    age: 30,
-    weight: 60,
-    height: 165,
-    activity: 1.2
-  };
+  const p = { id: crypto.randomUUID(), name: "New Person", sex: "female", age: 30, weight: 60, height: 165, activity: 1.2 };
   state.profiles.push(p);
   state.activeProfileId = p.id;
   render();
 });
 
+document.getElementById("foodCategory").addEventListener("change", renderFoodOptions);
+document.getElementById("foodSelect").addEventListener("change", updateFoodPreview);
+document.getElementById("foodQuantity").addEventListener("input", updateFoodPreview);
+document.getElementById("quantityUnit").addEventListener("change", updateFoodPreview);
+
 document.getElementById("addFoodBtn").addEventListener("click", () => {
-  const entry = {
-    foodName: document.getElementById("foodName").value.trim() || "Food",
-    calories: Number(document.getElementById("calories").value || 0),
-    protein: Number(document.getElementById("protein").value || 0),
-    iron: Number(document.getElementById("iron").value || 0),
-    vitaminC: Number(document.getElementById("vitaminC").value || 0),
-    vitaminD: Number(document.getElementById("vitaminD").value || 0),
-    b12: Number(document.getElementById("b12").value || 0),
-    calcium: Number(document.getElementById("calcium").value || 0),
-    folate: Number(document.getElementById("folate").value || 0),
-    fiber: Number(document.getElementById("fiber").value || 0)
-  };
-  getLog().push(entry);
-  clearFoodInputs();
+  const food = selectedFood();
+  if (!food) return;
+  const grams = selectedAmountInGrams();
+  if (grams <= 0) return;
+
+  const nutrition = calculateNutrition(food, grams);
+  getLog().push({
+    foodId: food.id,
+    foodName: food.name,
+    grams,
+    ...nutrition
+  });
   render();
 });
 
@@ -256,4 +318,5 @@ window.removeEntry = function(index) {
   render();
 };
 
+renderFoodCategories();
 render();

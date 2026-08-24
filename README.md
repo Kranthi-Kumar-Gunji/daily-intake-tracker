@@ -1,87 +1,73 @@
 # Daily Intake Tracker
 
-A simple GitHub Pages-ready nutrition dashboard that tracks daily calories and selected nutrients for multiple people.
+A GitHub Pages-ready nutrition dashboard for tracking daily calories, protein, vitamins and minerals for multiple people.
 
-## Features
+## New food database workflow
 
-- Multiple person profiles
-- Personalized calorie estimate from:
-  - age
-  - sex
-  - weight
-  - height
-  - activity level
-- BMR using the Mifflin–St Jeor equation
-- Daily nutrient target tracking for:
-  - Calories
-  - Protein
-  - Iron
-  - Vitamin C
-  - Vitamin D
-  - Vitamin B12
-  - Calcium
-  - Folate
-  - Fiber
-- Progress rings
-- Daily food log
-- Browser localStorage
-- No server/database required
-- Ready for GitHub Pages
+The app now uses `foods.js` as its starter food database.
 
-## Default Profiles
+Each food stores nutrition per 100 g plus a standard serving size. The user:
 
-The starter app contains:
+1. Selects a category.
+2. Selects a food.
+3. Enters a quantity.
+4. Chooses **Serving** or **Grams**.
+5. Sees calories and nutrient values populated automatically.
+6. Clicks **Add to Today**.
 
-- Sowmya: female, age 28, 45 kg, 152.4 cm
-- Kranthi: male, age 30, 90 kg, 170.2 cm
-
-You can edit or add profiles in the app.
-
-## Run locally
-
-Just open `index.html` in a browser.
-
-For a local web server:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
+Calculation used:
 
 ```text
-http://localhost:8000
+nutrient consumed = nutrient per 100 g × grams consumed / 100
 ```
 
-## Put it on GitHub
+## Files
 
-1. Create a new GitHub repository, for example `daily-intake-tracker`.
-2. Upload:
-   - `index.html`
-   - `style.css`
-   - `app.js`
-   - `README.md`
-3. Commit the files.
-4. In GitHub, open **Settings → Pages**.
-5. Under **Build and deployment**, choose **Deploy from a branch**.
-6. Select the `main` branch and `/ (root)`.
-7. Save.
+```text
+daily-intake-tracker/
+├── index.html
+├── style.css
+├── app.js
+├── foods.js
+└── README.md
+```
 
-GitHub will provide the public URL for your app.
+## Current tracked nutrients
 
-## Nutrition calculations
+- Calories
+- Protein
+- Iron
+- Vitamin C
+- Vitamin D
+- Vitamin B12
+- Calcium
+- Folate
+- Fiber
 
-Calories are estimated with the Mifflin–St Jeor BMR equation and an activity multiplier.
+## Default profiles
 
-The micronutrient values are general adult reference targets and are not intended to replace personalized medical or dietary advice. Pregnancy, breastfeeding, medical conditions, medications, athletic training, and other circumstances may require different targets.
+- Sowmya: female, 28 years, 45 kg, 152.4 cm
+- Kranthi: male, 30 years, 90 kg, 170.2 cm
 
-## Possible next upgrades
+Profiles can be edited or added in the app.
 
-- Search foods automatically using USDA FoodData Central
-- Breakfast/snack/lunch/dinner dropdown options
-- Meal templates
-- Weekly/monthly charts
-- Goal selection: lose / maintain / gain weight
-- Export to CSV or Excel
-- Cloud login and syncing
-- Add sodium, potassium, magnesium, zinc, vitamin A, vitamin E and vitamin K
+## GitHub Pages
+
+Upload all five files to the repository root. In GitHub open:
+
+**Settings → Pages → Deploy from a branch → main → / (root)**
+
+## Important data note
+
+`foods.js` is a starter local dataset for building and testing the application. Food nutrient values can vary by brand, recipe, cooking method and database entry. For a production nutrition app, replace or extend the starter data with a verified nutrition database such as USDA FoodData Central.
+
+## Recommended next upgrades
+
+- Search bar/autocomplete across foods
+- USDA FoodData Central API integration
+- Custom recipe builder (oats + milk + seeds + fruit)
+- Breakfast/lunch/snack/dinner classification
+- Saved favorite meals
+- Portion units such as cup, tbsp, piece and oz
+- Weekly/monthly intake history
+- Export CSV/Excel
