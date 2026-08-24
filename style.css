@@ -208,3 +208,49 @@ th { color: var(--muted); font-size: 12px; }
   .profile-grid, .food-grid, .calorie-summary { grid-template-columns: 1fr; }
   .rings { grid-template-columns: repeat(2, 1fr); }
 }
+
+.selector-grid {
+  grid-template-columns: 1.3fr 2fr .8fr .8fr;
+  margin-bottom: 8px;
+}
+
+.serving-hint {
+  margin: 2px 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.nutrition-preview {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.preview-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fafbfe;
+}
+
+.preview-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.preview-item strong {
+  font-size: 16px;
+}
+
+@media (max-width: 900px) {
+  .selector-grid { grid-template-columns: repeat(2, 1fr); }
+  .nutrition-preview { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .selector-grid { grid-template-columns: 1fr; }
+  .nutrition-preview { grid-template-columns: repeat(2, 1fr); }
+}
