@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Intake Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Daily Intake Tracker</h1>
+      <p>Calories, protein, minerals & vitamins — personalized by profile</p>
+    </div>
+    <button id="resetDayBtn" class="secondary">Reset Today</button>
+  </header>
+
+  <main>
+    <section class="card profile-card">
+      <div class="section-title">
+        <div>
+          <h2>Person Profile</h2>
+          <p>Create or update the person whose daily intake you want to track.</p>
+        </div>
+        <select id="profileSelect"></select>
+      </div>
+
+      <div class="grid profile-grid">
+        <label>Name
+          <input id="name" type="text" placeholder="e.g. Sowmya" />
+        </label>
+
+        <label>Sex
+          <select id="sex">
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </label>
+
+        <label>Age
+          <input id="age" type="number" min="18" max="100" value="28" />
+        </label>
+
+        <label>Weight (kg)
+          <input id="weight" type="number" min="30" max="250" step="0.1" value="45" />
+        </label>
+
+        <label>Height (cm)
+          <input id="height" type="number" min="120" max="230" step="0.1" value="152.4" />
+        </label>
+
+        <label>Activity
+          <select id="activity">
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Lightly active</option>
+            <option value="1.55">Moderately active</option>
+            <option value="1.725">Very active</option>
+            <option value="1.9">Extra active</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button id="saveProfileBtn">Save Profile</button>
+        <button id="newProfileBtn" class="secondary">New Profile</button>
+      </div>
+
+      <div class="calorie-summary">
+        <div><span>BMR</span><strong id="bmrValue">—</strong></div>
+        <div><span>Estimated Daily Calories</span><strong id="calorieTargetValue">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Today's Progress</h2>
+          <p id="todayLabel"></p>
+        </div>
+      </div>
+      <div id="rings" class="rings"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Add Food / Meal</h2>
+          <p>Enter the nutrition for a serving. Values are added to today’s total.</p>
+        </div>
+      </div>
+
+      <div class="grid food-grid">
+        <label>Food / Meal
+          <input id="foodName" type="text" placeholder="e.g. Oats + milk + berries" />
+        </label>
+        <label>Calories (kcal)<input id="calories" type="number" min="0" step="1" /></label>
+        <label>Protein (g)<input id="protein" type="number" min="0" step="0.1" /></label>
+        <label>Iron (mg)<input id="iron" type="number" min="0" step="0.1" /></label>
+        <label>Vitamin C (mg)<input id="vitaminC" type="number" min="0" step="0.1" /></label>
+        <label>Vitamin D (mcg)<input id="vitaminD" type="number" min="0" step="0.1" /></label>
+        <label>Vitamin B12 (mcg)<input id="b12" type="number" min="0" step="0.1" /></label>
+        <label>Calcium (mg)<input id="calcium" type="number" min="0" step="1" /></label>
+        <label>Folate (mcg DFE)<input id="folate" type="number" min="0" step="1" /></label>
+        <label>Fiber (g)<input id="fiber" type="number" min="0" step="0.1" /></label>
+      </div>
+
+      <button id="addFoodBtn">Add to Today</button>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div>
+          <h2>Today's Food Log</h2>
+          <p>All entries are saved locally in your browser.</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Food</th>
+              <th>Calories</th>
+              <th>Protein</th>
+              <th>Iron</th>
+              <th>Vit C</th>
+              <th>Vit D</th>
+              <th>B12</th>
+              <th>Calcium</th>
+              <th>Folate</th>
+              <th>Fiber</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="foodTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card notes">
+      <h2>How targets are calculated</h2>
+      <p>
+        Calories use the Mifflin–St Jeor equation for estimated BMR multiplied by the selected activity factor.
+        Nutrient targets use general adult Dietary Reference Intake-style targets by sex and age.
+        This app is for personal tracking and education, not medical diagnosis or treatment.
+      </p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
